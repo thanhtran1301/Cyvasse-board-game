@@ -254,4 +254,27 @@ public class Board{
   }
   return true;
  }
+
+//This is my modification for the water movement unlock
+  public void waterUnlock(){
+    for(int i = 0; i < squareArray.length; i++){
+      for(int j = 0; j < squareArray.length; j++){
+        if(squareArray[i][j].getPiece() != null && squareArray[i][j].getModifier() == Square.WATER){
+          squareArray[i][j].getPiece().loseturn++;
+        }
+      }
+    }
+  }
+  public void waterUnlock1(Point endPoint){
+    for(int i = 0; i < squareArray.length; i++){
+      for(int j = 0; j < squareArray.length; j++){
+        if(squareArray[i][j].getPiece() != null && squareArray[i][j].getModifier() == Square.WATER){
+          if(endPoint.x == i && endPoint.y == j) continue;
+          else squareArray[i][j].getPiece().loseturn++;
+        }
+      }
+    }
+  }
 }
+
+

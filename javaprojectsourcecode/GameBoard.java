@@ -84,7 +84,7 @@ public class GameBoard extends JFrame{
  }
 
  private void setupCustomBoard2(){
-  //setup board for the first player
+  //setup terrains for the first player
   board.getSquare(new Point(0,6)).setModifier(Square.MOUNTAIN, 1);
   board.getSquare(new Point(1,7)).setModifier(Square.MOUNTAIN, 1);
   board.getSquare(new Point(3,6)).setModifier(Square.MOUNTAIN, 1);
@@ -102,26 +102,44 @@ public class GameBoard extends JFrame{
   }
   board.getSquare(new Point(7,4)).setModifier(Square.FORTRESS, 1);
   phase = 1;
-  //setup board for the second player
-  /*board.getSquare(new Point(0,6)).setModifier(Square.MOUNTAIN, 1);
-  board.getSquare(new Point(1,7)).setModifier(Square.MOUNTAIN, 1);
-  board.getSquare(new Point(3,6)).setModifier(Square.MOUNTAIN, 1);
-  board.getSquare(new Point(4,7)).setModifier(Square.MOUNTAIN, 1);
-  board.getSquare(new Point(6,6)).setModifier(Square.MOUNTAIN, 1);
-  board.getSquare(new Point(7,7)).setModifier(Square.MOUNTAIN, 1);
-  int i;
+
+  //setup pieces for the first player
+  for( i = 0; i <= 7; i++)
+  {
+    board.setPiece(new Point(i,5), i + 1, 1);
+  }
+  i--;
+  board.setPiece(new Point(i,6), 9, 1);
+  board.setPiece(new Point(6,7), 10, 1);
+  phase = 2;
+  //setup terrains for the second player
+  board.getSquare(new Point(0,0)).setModifier(Square.MOUNTAIN, 2);
+  board.getSquare(new Point(1,1)).setModifier(Square.MOUNTAIN, 2);
+  board.getSquare(new Point(3,0)).setModifier(Square.MOUNTAIN, 2);
+  board.getSquare(new Point(4,1)).setModifier(Square.MOUNTAIN, 2);
+  board.getSquare(new Point(6,0)).setModifier(Square.MOUNTAIN, 2);
+  board.getSquare(new Point(7,1)).setModifier(Square.MOUNTAIN, 2);
+  
   for(i = 0; i < 5; i++)
   {
-    board.getSquare(new Point(i,4)).setModifier(Square.WATER, 1);
+    board.getSquare(new Point(i,3)).setModifier(Square.WATER, 2);
   }
   for(i = 0; i < 6; i++)
   {
-    board.getSquare(new Point(i,5)).setModifier(Square.FOREST, 1);
+    board.getSquare(new Point(i,2)).setModifier(Square.FOREST, 2);
   }
-  board.getSquare(new Point(7,4)).setModifier(Square.FORTRESS, 1);*/
+  board.getSquare(new Point(7,0)).setModifier(Square.FORTRESS, 2);
+  phase = 3;
+  //setup pieces for the second player
+  for( i = 0; i <= 7; i++)
+  {
+    board.setPiece(new Point(i,2), i + 1, 2);
+  }
+  
+  board.setPiece(new Point(6,1), 9, 2);
+  board.setPiece(new Point(5,0), 10, 2);
 
-  
-  
+  phase = 4;
 
  }
  
@@ -287,14 +305,39 @@ public class GameBoard extends JFrame{
    if(rangedAttack){
     //Remove unit without moving
     board.removePiece(endPoint);
+    board.waterUnlock();
    }
+   else // this is what I modified 
+   {
+    board.setPiece(endPoint, p);
+    if(board.getSquare(endPoint).getModifier() == Square.WATER){
+      board.getSquare(endPoint).getPiece().inwater = true;
+      board.getSquare(endPoint).getPiece().loseturn = 0;
+    }
+    if(board.getSquare(endPoint).getPiece().getPieceNo() == Piece.TREBUCHET){
+      board.getSquare(endPoint).getPiece().trebuMove(lastClickedPoint,endPoint);
+    }
+    board.removePiece(lastClickedPoint);
+    board.waterUnlock1(endPoint);
+   }
+    ////
+ }
    else{
     //Move unit and change labels
     board.setPiece(endPoint, p);
+    if(board.getSquare(endPoint).getModifier() == Square.WATER){
+      board.getSquare(endPoint).getPiece().inwater = true;
+      board.getSquare(endPoint).getPiece().loseturn = 0;
+    }
+    if(board.getSquare(endPoint).getPiece().getPieceNo() == Piece.TREBUCHET){
+      board.getSquare(endPoint).getPiece().trebuMove(lastClickedPoint,endPoint);
+    }    
     board.removePiece(lastClickedPoint);
+    board.waterUnlock1(endPoint);
    }
-  }
+  
  }
+
  /**
  ** Private class to handle the main GUI
  **/
@@ -371,6 +414,48 @@ public class GameBoard extends JFrame{
       }
       else{//Actual game phase
        //Check if piece is clicked on, and piece belongs to the player
+        // I modifed this so they players can attack their own pieces
+       Piece clickedPiece = board.getSquare(new Point(xSquare, ySquare)).getPiece();
+       if(unitSelected && validMoveArray.contains(new Point(xSquare, ySquare))){
+        Piece lastClickedPiece = board.getSquare(lastClickedPoint).getPiece();
+        Point endPoint = new Point(xSquare, ySquare);
+        //If Ranged Attack
+        if(Piece.isRanged[lastClickedPiece.getPieceNo()] &&
+         board.getSquare(endPoint).getPiece() != null){
+         takePiece(new Point(xSquare, ySquare), lastClickedPiece, true);
+        }
+        else{ //Movement
+         takePiece(new Point(xSquare, ySquare), lastClickedPiece, false);
+        }
+        
+   
+        //Reset moves
+        validMoveArray = new ArrayList<Point>();
+        lastClickedPoint = new Point();
+        unitSelected=false;
+        alreadyMoved = true;
+        //TODO
+       }
+       else if(clickedPiece != null && clickedPiece.getOwner() == playerTurn && !alreadyMoved){
+        validMoveArray = new ArrayList<Point>(board.getValidMoves(new Point(xSquare, ySquare)));
+        lastClickedPoint = new Point(xSquare, ySquare);
+        unitSelected = true;
+       }
+       //Check if player is making a move
+       
+       else{
+        validMoveArray = new ArrayList<Point>();
+        lastClickedPoint = new Point();
+        unitSelected=false;
+       }
+       
+       //Check if King has been taken
+       if(!enemyKingAlive(playerTurn)){
+        endGame(playerTurn);
+       }
+      }
+      /*else{//Actual game phase
+       //Check if piece is clicked on, and piece belongs to the player
        Piece clickedPiece = board.getSquare(new Point(xSquare, ySquare)).getPiece();
        if(clickedPiece != null && clickedPiece.getOwner() == playerTurn && !alreadyMoved){
         validMoveArray = new ArrayList<Point>(board.getValidMoves(new Point(xSquare, ySquare)));
@@ -408,7 +493,7 @@ public class GameBoard extends JFrame{
        if(!enemyKingAlive(playerTurn)){
         endGame(playerTurn);
        }
-      }
+      }*/
       repaint();
      }
     }

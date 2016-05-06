@@ -19,16 +19,26 @@ public abstract class Piece{
 	//Array of names of pieces
 	public static final String[] pieceName = {"", "R", "S", "C", "L", "H", "E", "P", "T", "D", "K"};
 	
+	
 	//Piece number
 	private int pieceNo;
 	//Owner of piece
 	private int owner;
-	
+	// this is my modification
+	public boolean inwater = false;
+	public int loseturn = 0;
+
+	protected Point trebBegin = null;
+	protected Point trebEnd = null;
 	/**
 	** Constructor for Piece class
 	** @param n Piece number
 	** @param player Player number
 	**/
+	public void trebuMove(Point beginPoint, Point endPoint){
+		trebBegin = beginPoint;
+		trebEnd = endPoint;
+	}
 	public Piece(int n, int player){
 		pieceNo = n;
 		owner = player;
